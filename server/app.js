@@ -1,5 +1,6 @@
 const express = require('express');
 const logger = require('morgan');
+const { getInsertParams } = require('./middleware/db.js');
 const app = express();
 const port = 3000;
 
@@ -16,3 +17,12 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
+
+const temp = {
+  username: 'sample_username',
+  password: 'sample_pass',
+  role: 'sample_role', 
+  test: 'nie_wiem' ,
+};
+
+console.log(getInsertParams(temp));
