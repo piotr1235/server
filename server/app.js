@@ -1,13 +1,15 @@
 const express = require('express');
 const logger = require('morgan');
+const cors = require('cors');
 const { getInsertParams } = require('./middleware/db.js');
 const app = express();
-const port = 3000;
+const port = 5000;
 
 const api = require('./routes/api.js');
 
 app.use(logger('dev'));
 app.use(express.json());
+app.use(cors());
 app.use('/api', api);
 
 app.get('/', (req, res) => {

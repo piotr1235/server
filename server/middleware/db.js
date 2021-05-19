@@ -31,6 +31,16 @@ function getOne(tableName, id, next) {
   );
 }
 
+function getWhere(tableName, obj, next) {
+  db.query(
+    `select * from ${tableName} where ${getWhereParams(obj)}`,
+    (err, rows, fields) => {
+      if (err || !rows[0]) next(new Error());
+      else next(err, rows[0]);
+    }
+  );
+}
+
 function createOne(tableName, body, next) {
   db.query(
     `INSERT INTO ${tableName} ${getInsertParams(body)}`,
@@ -41,12 +51,24 @@ function createOne(tableName, body, next) {
   );
 }
 
-function deleteOne(tableName, obj, next)  {
+function deleteOne(tableName, obj, next) {
   const params = getWhereParams(obj);
   db.query(`delete from ${tableName} where ${params}`, (err, result) => {
     if (err || result.affectedRows === 0) next(err || new Error());
     else next(err, result);
   });
+}
+
+const getWhereParams = (obj) => {
+  const result = [];
+  for (const key in obj) {
+    if (Object.hasOwnProperty.call(obj, key)) {
+      const element = obj[key];
+      result.push(`${key}='${element}'`);
+    }
+  }
+
+  return result.join(' and ');
 };
 
 const getInsertParams = (obj) => {
@@ -67,3 +89,4 @@ module.exports.deleteOne = deleteOne;
 module.exports.getInsertParams = getInsertParams;
 module.exports.getOne = getOne;
 module.exports.createOne = createOne;
+module.exports.getWhere = getWhere;
