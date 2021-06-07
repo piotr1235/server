@@ -13,7 +13,10 @@ const {
   getWhere,
 } = require('../middleware/db');
 
-router.get('/', function (req, res, next) {
+/**
+ * get all users
+ */
+router.get('/', adminAccessOnly,function (req, res, next) {
   getAllUsers('users', function (err, rows) {
     if (err) {
       res.status(500).send();
@@ -23,18 +26,28 @@ router.get('/', function (req, res, next) {
   });
 });
 
-// router.get('/:id', async function (req, res, next) {
-//   const id = req.params.id;
-//   getOne('users', id, function (err, rows) {
-//     if (err) {
-//       res.status(404).send({ message: 'incorrect id' });
-//     } else {
-//       res.json(rows);
-//     }
-//   });
-//   //res.send(`get user with id: ${id}`);
-//   //res.send("get user with id: " + id);
-// });
+/**
+ * Check username of currently logged user.
+ */
+router.get('/whoami', authenticateToken, async function (req, res, next) {
+  res.json(req.user.username);
+});
+
+/**
+ * get user by id 
+ */
+router.get('/:id', adminAccessOnly, async function (req, res, next) {
+  const id = req.params.id;
+  getOne('users', id, function (err, rows) {
+    if (err) {
+      res.status(404).send({ message: 'incorrect id' });
+    } else {
+      res.json(rows);
+    }
+  });
+  //res.send(`get user with id: ${id}`);
+  //res.send("get user with id: " + id);
+});
 
 /**
  * Sign up an user. Save user info with hashed password in MySQL DB.
@@ -43,7 +56,6 @@ router.post('/', async function (req, res, next) {
   const data = {
     username: req.body.username, // TODO: validate username
     password: await bcrypt.hash(req.body.password, 10),
-    
   };
 
   createOne('users', data, function (err) {
@@ -60,7 +72,7 @@ router.post('/', async function (req, res, next) {
 /**
  * Login request from an user. Response with JWT.
  */
- router.post('/login', async function (req, res, next) {
+router.post('/login', async function (req, res, next) {
   const username = req.body.username;
   const user = { username: username };
   getWhere('users', user, async function (err, rows) {
@@ -78,7 +90,6 @@ router.post('/', async function (req, res, next) {
         const ip = req.ip.match(re) && req.ip.match(re)[0];
         console.log(ip);
 
-
         const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
         res.status(202).json({ accessToken: accessToken });
       } else {
@@ -90,7 +101,7 @@ router.post('/', async function (req, res, next) {
   });
 });
 
-router.delete('/:id', async function (req, res, next) {
+router.delete('/:id', adminAccessOnly, async function (req, res, next) {
   const id = req.params.id;
   deleteOne('users', { id }, function (err) {
     if (err) {
@@ -105,7 +116,7 @@ router.delete('/:id', async function (req, res, next) {
 /**
  * Authenticates user from authorization header or an cookie 'jwt'
  */
- function authenticateToken(req, res, next) {
+function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
 
   let token =
@@ -126,11 +137,16 @@ router.delete('/:id', async function (req, res, next) {
   });
 }
 
-/**
- * Check username of currently logged user.
- */
- router.get('/whoami', authenticateToken, async function (req, res, next) {
-  res.json(req.user.username);
-});
+function adminAccessOnly(req, res, next) {
+  authenticateToken(req, res, () => {
+    if (req.user.role == 'admin') {
+      next();
+    } else {
+      return res
+        .status(403)
+        .json({ message: 'You cannot access this resource' });
+    }
+  });
+}
 
 module.exports = router;

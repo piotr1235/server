@@ -1,0 +1,3 @@
+#!/bin/bash -e. /home/pi/.nvm/nvm.sh
+NODE_ENV=production PORT="3000" \
+    exec /home/pi/server/app.js

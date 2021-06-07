@@ -84,9 +84,20 @@ const getInsertParams = (obj) => {
   return `(${col.join(', ')}) values (${val.join(', ')})`;
 };
 
+function getDeviceByUserName(userName, next) {
+  db.query(
+    `SELECT device_name,username FROM devices as d join users as u on u.id=d.user_id WHERE username = '${userName}'`,
+    (err, rows, fields) => {
+      if (err) next(err);
+      else next(err, rows);
+    }
+  );
+}
+
 module.exports.getAllUsers = getAllUsers;
 module.exports.deleteOne = deleteOne;
 module.exports.getInsertParams = getInsertParams;
 module.exports.getOne = getOne;
 module.exports.createOne = createOne;
 module.exports.getWhere = getWhere;
+module.exports.getDeviceByUserName = getDeviceByUserName;
